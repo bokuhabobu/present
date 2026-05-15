@@ -14,7 +14,7 @@
     <header class="app-header">
       <div class="header-title">
         <h1>Vocabulary(EN/DE)</h1>
-        <div id="wordSummary" class="summary-pill">0 words / 0 mistakes</div>
+        <div id="wordSummary" class="summary-pill">0 words</div>
       </div>
     </header>
 
@@ -47,7 +47,6 @@
             <option value="az">A-Z</option>
             <option value="za">Z-A</option>
             <option value="random">Random</option>
-            <option value="wrong-desc">Most mistakes</option>
             <option value="rate-asc">Lowest accuracy</option>
           </select>
 
@@ -67,8 +66,8 @@
             aria-label="Filter value"
           ></select>
 
-          <button id="practiceMistakesBtn" type="button" class="btn btn-primary toolbar-action">
-            Practice Mistakes
+          <button id="resetAllScoresBtn" type="button" class="btn btn-soft toolbar-action">
+            Reset Counts
           </button>
         </div>
 
@@ -86,11 +85,35 @@
             Practice words in both directions: English to German or German to English.
           </p>
 
-          <div class="form-actions">
+          <div class="study-control-grid">
             <select id="cardDirection" class="select" aria-label="Flashcard direction">
               <option value="en-de">English → German</option>
               <option value="de-en">German → English</option>
             </select>
+
+            <select id="cardSortSelect" class="select" aria-label="Flashcard sort">
+              <option value="created-asc">Created order</option>
+              <option value="az">A-Z</option>
+              <option value="za">Z-A</option>
+              <option value="random">Random</option>
+              <option value="rate-asc">Lowest accuracy</option>
+            </select>
+
+            <select id="cardFilterType" class="select" aria-label="Flashcard filter type">
+              <option value="all">All</option>
+              <option value="level">CEFR Level</option>
+              <option value="pos">Part of Speech</option>
+              <option value="weak">Weak</option>
+              <option value="review">Review</option>
+              <option value="favorite">Favorite</option>
+              <option value="mistakes">Mistakes</option>
+            </select>
+
+            <select
+              id="cardFilterValue"
+              class="select is-hidden"
+              aria-label="Flashcard filter value"
+            ></select>
 
             <button id="startCardsBtn" type="button" class="btn btn-primary">
               Start Cards
@@ -112,11 +135,35 @@
             Create four-choice questions from your saved words. Similar part of speech and CEFR level are prioritized.
           </p>
 
-          <div class="form-actions">
+          <div class="study-control-grid">
             <select id="quizDirection" class="select" aria-label="Quiz direction">
               <option value="en-de">English → German</option>
               <option value="de-en">German → English</option>
             </select>
+
+            <select id="quizSortSelect" class="select" aria-label="Quiz sort">
+              <option value="created-asc">Created order</option>
+              <option value="az">A-Z</option>
+              <option value="za">Z-A</option>
+              <option value="random">Random</option>
+              <option value="rate-asc">Lowest accuracy</option>
+            </select>
+
+            <select id="quizFilterType" class="select" aria-label="Quiz filter type">
+              <option value="all">All</option>
+              <option value="level">CEFR Level</option>
+              <option value="pos">Part of Speech</option>
+              <option value="weak">Weak</option>
+              <option value="review">Review</option>
+              <option value="favorite">Favorite</option>
+              <option value="mistakes">Mistakes</option>
+            </select>
+
+            <select
+              id="quizFilterValue"
+              class="select is-hidden"
+              aria-label="Quiz filter value"
+            ></select>
 
             <button id="startQuizBtn" type="button" class="btn btn-primary">
               Start Quiz
@@ -138,10 +185,6 @@
 
         <div id="quizOptions" class="quiz-options"></div>
 
-        <div class="mode-card card">
-          <h2>Missed Words</h2>
-          <div id="quizMistakes" class="quiz-mistakes"></div>
-        </div>
       </section>
 
       <section id="addPanel" class="tab-panel">

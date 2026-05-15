@@ -1,22 +1,26 @@
 # English-German Vocabulary Book
 
-A responsive English-German vocabulary web app for GitHub Pages.
+A small English-German vocabulary web app that runs with only HTML, CSS, and JavaScript.
 
-## Fixed in this version
+## Features
 
-- Reduced the slightly bluish UI color and changed it to a warmer neutral theme.
-- Moved `0 words / 0 mistakes` under `Vocabulary(EN/DE)`.
-- Removed the dedicated `Mistakes` tab to save space on small screens.
-- Kept mistake review inside the `Words` area through:
-  - `Mistakes` filter
-  - `Practice Mistakes` button
-- Added smaller-screen support, including iPhone SE width.
-- Improved iPad/tablet layout so the toolbar does not become too cramped.
+- Save words in `localStorage`
+- Add, edit, delete words
+- Auto-suggest part of speech
+- Hide English / German globally or per card
+- Force-show English / German on an individual card even when global hide is active
+- Compact word cards with an Open / Close details toggle
+- Filter by CEFR level, part of speech, checklist flags, or mistakes
+- Sort by created order, A-Z, Z-A, random, or lowest accuracy
+- Flashcards with the same sort/filter controls as the word list
+- 4-choice quiz with the same sort/filter controls as the word list
+- Reset all correct/wrong counts at once
+- Responsive layout for small phones, iPhone SE-size screens, smartphones, tablets, and PCs
 
-## Target responsive widths
+## Files
 
-- Small phones: 320px to 360px
-- iPhone SE class: 375px width
-- Modern phones: 390px to 430px width
-- iPad/tablet portrait: 768px to 834px width
-- Desktop/tablet landscape: 1024px and wider
+- `index.html`
+- `style.css`
+- `script.js`
+
+Open `index.html` in a browser or publish the folder with GitHub Pages.

@@ -62,17 +62,20 @@ let posManuallyChanged = false;
   It is not saved to localStorage because it is only a display mode.
 */
 const individualHiddenState = {};
+const expandedCardState = {};
 
 const cardState = {
   direction: "en-de",
   pool: [],
   currentWord: null,
   answerShown: false,
-  mistakesOnly: false
+  currentIndex: -1
 };
 
 const quizState = {
   direction: "en-de",
+  pool: [],
+  currentIndex: -1,
   currentWord: null,
   options: [],
   answered: false,
@@ -95,6 +98,7 @@ const elements = {
   sortSelect: $("#sortSelect"),
   filterType: $("#filterType"),
   filterValue: $("#filterValue"),
+  resetAllScoresBtn: $("#resetAllScoresBtn"),
   wordsGrid: $("#wordsGrid"),
   emptyWords: $("#emptyWords"),
 
@@ -113,10 +117,16 @@ const elements = {
   posHint: $("#posHint"),
 
   cardDirection: $("#cardDirection"),
+  cardSortSelect: $("#cardSortSelect"),
+  cardFilterType: $("#cardFilterType"),
+  cardFilterValue: $("#cardFilterValue"),
   startCardsBtn: $("#startCardsBtn"),
   flashcardBox: $("#flashcardBox"),
 
   quizDirection: $("#quizDirection"),
+  quizSortSelect: $("#quizSortSelect"),
+  quizFilterType: $("#quizFilterType"),
+  quizFilterValue: $("#quizFilterValue"),
   startQuizBtn: $("#startQuizBtn"),
   resetQuizBtn: $("#resetQuizBtn"),
   quizBox: $("#quizBox"),
@@ -498,12 +508,16 @@ function autoDetectFormPOS(force = false) {
 function getIndividualHiddenState(wordId) {
   if (!individualHiddenState[wordId]) {
     individualHiddenState[wordId] = {
-      english: false,
-      german: false
+      english: null,
+      german: null
     };
   }
 
   return individualHiddenState[wordId];
+}
+
+function getExpandedCardState(wordId) {
+  return Boolean(expandedCardState[wordId]);
 }
 
 function isHiddenByGlobalMode(language) {
@@ -525,21 +539,20 @@ function isHiddenByGlobalMode(language) {
 }
 
 function shouldHideWordPart(word, language) {
-  if (isHiddenByGlobalMode(language)) {
+  const state = getIndividualHiddenState(word.id);
+  const override = state[language];
+
+  // true means "force show this part", even when a global hide mode is active.
+  if (override === true) {
+    return false;
+  }
+
+  // false means "force hide this part", even when the global mode is Show all.
+  if (override === false) {
     return true;
   }
 
-  const state = getIndividualHiddenState(word.id);
-
-  if (language === "english") {
-    return state.english;
-  }
-
-  if (language === "german") {
-    return state.german;
-  }
-
-  return false;
+  return isHiddenByGlobalMode(language);
 }
 
 function getVisibleWordText(word, language) {
@@ -561,16 +574,23 @@ function getVisibleWordClass(word, language) {
 }
 
 function toggleIndividualVisibility(wordId, language) {
+  const word = findWordById(wordId);
+
+  if (!word) {
+    return;
+  }
+
   const state = getIndividualHiddenState(wordId);
+  const currentlyHidden = shouldHideWordPart(word, language);
 
-  if (language === "english") {
-    state.english = !state.english;
-  }
+  state[language] = currentlyHidden ? true : false;
 
-  if (language === "german") {
-    state.german = !state.german;
-  }
+  renderWords();
+  renderMistakes();
+}
 
+function toggleCardDetails(wordId) {
+  expandedCardState[wordId] = !getExpandedCardState(wordId);
   renderWords();
   renderMistakes();
 }
@@ -581,9 +601,8 @@ function toggleIndividualVisibility(wordId, language) {
 
 function updateSummary() {
   const total = words.length;
-  const mistakes = words.filter((word) => word.wrongCount > 0).length;
 
-  elements.wordSummary.textContent = `${total} words / ${mistakes} mistakes`;
+  elements.wordSummary.textContent = `${total} words`;
 }
 
 function getChecklistBadges(word) {
@@ -605,138 +624,156 @@ function createWordCard(word) {
   const englishClass = getVisibleWordClass(word, "english");
   const germanClass = getVisibleWordClass(word, "german");
 
-  const individualState = getIndividualHiddenState(word.id);
+  const isEnglishHidden = shouldHideWordPart(word, "english");
+  const isGermanHidden = shouldHideWordPart(word, "german");
+  const isExpanded = getExpandedCardState(word.id);
 
-  const englishButtonText = individualState.english ? "Show EN" : "Hide EN";
-  const germanButtonText = individualState.german ? "Show DE" : "Hide DE";
+  const englishButtonText = isEnglishHidden ? "Show EN" : "Hide EN";
+  const germanButtonText = isGermanHidden ? "Show DE" : "Hide DE";
 
-  const englishButtonActive = individualState.english ? "is-active" : "";
-  const germanButtonActive = individualState.german ? "is-active" : "";
+  const englishButtonActive = isEnglishHidden ? "is-active" : "";
+  const germanButtonActive = isGermanHidden ? "is-active" : "";
 
   return `
-    <article class="word-card" data-id="${word.id}">
-      <div class="word-card-top">
-        <div>
-          <h3 class="${englishClass}">
-            ${escapeHtml(visibleEnglish)}
-          </h3>
+    <article class="word-card ${isExpanded ? "is-expanded" : "is-compact"}" data-id="${word.id}">
+      <div class="word-card-basic">
+        <div class="word-card-top">
+          <div class="word-title-block">
+            <h3 class="${englishClass}">
+              ${escapeHtml(visibleEnglish)}
+            </h3>
 
-          <p class="german-word ${germanClass}">
-            ${escapeHtml(visibleGerman)}
-          </p>
+            <p class="german-word ${germanClass}">
+              ${escapeHtml(visibleGerman)}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-mini-toggle details-toggle"
+            data-action="toggle-card"
+            aria-expanded="${isExpanded}"
+          >
+            ${isExpanded ? "Close" : "Open"}
+          </button>
         </div>
 
-        <div class="badge-stack">
+        <div class="word-visibility-actions">
+          <button
+            type="button"
+            class="btn btn-mini-toggle ${englishButtonActive}"
+            data-action="toggle-english"
+          >
+            ${englishButtonText}
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-mini-toggle ${germanButtonActive}"
+            data-action="toggle-german"
+          >
+            ${germanButtonText}
+          </button>
+        </div>
+      </div>
+
+      <div class="word-card-details ${isExpanded ? "" : "is-collapsed"}">
+        <div class="badge-stack compact-left">
           <span class="badge level-badge">${escapeHtml(word.level)}</span>
           <span class="badge pos-badge">${escapeHtml(word.pos)}</span>
         </div>
-      </div>
 
-      <div class="word-visibility-actions">
-        <button
-          type="button"
-          class="btn btn-mini-toggle ${englishButtonActive}"
-          data-action="toggle-english"
-        >
-          ${englishButtonText}
-        </button>
+        <div class="checklist-row">
+          ${getChecklistBadges(word)}
+        </div>
 
-        <button
-          type="button"
-          class="btn btn-mini-toggle ${germanButtonActive}"
-          data-action="toggle-german"
-        >
-          ${germanButtonText}
-        </button>
-      </div>
+        <div class="stats-row" aria-label="study statistics">
+          <span>✅ ${word.correctCount}</span>
+          <span>❌ ${word.wrongCount}</span>
+          <span>Rate ${formatRate(word)}</span>
+        </div>
 
-      <div class="checklist-row">
-        ${getChecklistBadges(word)}
-      </div>
+        <div class="card-actions">
+          <button type="button" class="btn btn-soft" data-action="memo">
+            Memo
+          </button>
 
-      <div class="stats-row" aria-label="study statistics">
-        <span>✅ ${word.correctCount}</span>
-        <span>❌ ${word.wrongCount}</span>
-        <span>Rate ${formatRate(word)}</span>
-      </div>
+          <button type="button" class="btn btn-soft" data-action="edit">
+            Edit
+          </button>
 
-      <div class="card-actions">
-        <button type="button" class="btn btn-soft" data-action="memo">
-          Memo
-        </button>
+          <button type="button" class="btn btn-danger-soft" data-action="delete">
+            Delete
+          </button>
 
-        <button type="button" class="btn btn-soft" data-action="edit">
-          Edit
-        </button>
+          <button type="button" class="btn btn-correct" data-action="correct">
+            Correct
+          </button>
 
-        <button type="button" class="btn btn-danger-soft" data-action="delete">
-          Delete
-        </button>
-
-        <button type="button" class="btn btn-correct" data-action="correct">
-          Correct
-        </button>
-
-        <button type="button" class="btn btn-wrong" data-action="wrong">
-          Wrong
-        </button>
+          <button type="button" class="btn btn-wrong" data-action="wrong">
+            Wrong
+          </button>
+        </div>
       </div>
     </article>
   `;
 }
 
-function populateFilterValues() {
-  const type = elements.filterType.value;
-  const currentValue = elements.filterValue.value;
+function populateFilterValuesFor(filterTypeElement, filterValueElement) {
+  if (!filterTypeElement || !filterValueElement) {
+    return;
+  }
 
-  elements.filterValue.innerHTML = "";
+  const type = filterTypeElement.value;
+  const currentValue = filterValueElement.value;
+
+  filterValueElement.innerHTML = "";
 
   if (type === "level") {
-    elements.filterValue.classList.remove("is-hidden");
+    filterValueElement.classList.remove("is-hidden");
 
-    elements.filterValue.innerHTML = LEVEL_OPTIONS
+    filterValueElement.innerHTML = LEVEL_OPTIONS
       .map((level) => `<option value="${level}">${level}</option>`)
       .join("");
 
     if (LEVEL_OPTIONS.includes(currentValue)) {
-      elements.filterValue.value = currentValue;
+      filterValueElement.value = currentValue;
     }
 
     return;
   }
 
   if (type === "pos") {
-    elements.filterValue.classList.remove("is-hidden");
+    filterValueElement.classList.remove("is-hidden");
 
-    elements.filterValue.innerHTML = POS_OPTIONS
+    filterValueElement.innerHTML = POS_OPTIONS
       .map((pos) => `<option value="${pos}">${pos}</option>`)
       .join("");
 
     if (POS_OPTIONS.includes(currentValue)) {
-      elements.filterValue.value = currentValue;
+      filterValueElement.value = currentValue;
     }
 
     return;
   }
 
-  elements.filterValue.classList.add("is-hidden");
+  filterValueElement.classList.add("is-hidden");
 }
 
-function getFilteredSortedWords() {
-  const query = elements.searchInput.value.trim().toLowerCase();
-  const filterType = elements.filterType.value;
-  const filterValue = elements.filterValue.value;
-  const sortValue = elements.sortSelect.value;
+function populateFilterValues() {
+  populateFilterValuesFor(elements.filterType, elements.filterValue);
+}
 
-  let result = words.filter((word) => {
-    const matchesSearch =
-      word.english.toLowerCase().includes(query) ||
-      word.german.toLowerCase().includes(query);
+function populateCardFilterValues() {
+  populateFilterValuesFor(elements.cardFilterType, elements.cardFilterValue);
+}
 
-    if (!matchesSearch) {
-      return false;
-    }
+function populateQuizFilterValues() {
+  populateFilterValuesFor(elements.quizFilterType, elements.quizFilterValue);
+}
 
+function applyFilterPool(sourceWords, filterType, filterValue) {
+  return sourceWords.filter((word) => {
     if (filterType === "level") {
       return word.level === filterValue;
     }
@@ -763,6 +800,10 @@ function getFilteredSortedWords() {
 
     return true;
   });
+}
+
+function applySortPool(sourceWords, sortValue) {
+  let result = [...sourceWords];
 
   if (sortValue === "az") {
     result.sort((a, b) => a.english.localeCompare(b.english));
@@ -772,8 +813,6 @@ function getFilteredSortedWords() {
     result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   } else if (sortValue === "random") {
     result = shuffleArray(result);
-  } else if (sortValue === "wrong-desc") {
-    result.sort((a, b) => b.wrongCount - a.wrongCount);
   } else if (sortValue === "rate-asc") {
     result.sort((a, b) => {
       const rateDifference = getAccuracy(a) - getAccuracy(b);
@@ -787,6 +826,48 @@ function getFilteredSortedWords() {
   }
 
   return result;
+}
+
+function getFilteredSortedWords() {
+  const query = elements.searchInput.value.trim().toLowerCase();
+  const filterType = elements.filterType.value;
+  const filterValue = elements.filterValue.value;
+  const sortValue = elements.sortSelect.value;
+
+  const searchedWords = words.filter((word) => {
+    return (
+      word.english.toLowerCase().includes(query) ||
+      word.german.toLowerCase().includes(query)
+    );
+  });
+
+  return applySortPool(
+    applyFilterPool(searchedWords, filterType, filterValue),
+    sortValue
+  );
+}
+
+function getStudyPool(mode) {
+  const sortElement = mode === "cards"
+    ? elements.cardSortSelect
+    : elements.quizSortSelect;
+
+  const filterTypeElement = mode === "cards"
+    ? elements.cardFilterType
+    : elements.quizFilterType;
+
+  const filterValueElement = mode === "cards"
+    ? elements.cardFilterValue
+    : elements.quizFilterValue;
+
+  const filterType = filterTypeElement?.value || "all";
+  const filterValue = filterValueElement?.value || "";
+  const sortValue = sortElement?.value || "created-asc";
+
+  return applySortPool(
+    applyFilterPool(words, filterType, filterValue),
+    sortValue
+  );
 }
 
 function renderWords() {
@@ -804,14 +885,9 @@ function renderMistakes() {
     .filter((word) => word.wrongCount > 0)
     .sort((a, b) => b.wrongCount - a.wrongCount);
 
-  if (elements.practiceMistakesBtn) {
-    elements.practiceMistakesBtn.disabled = mistakeWords.length === 0;
-  }
-
   /*
     The dedicated Mistakes tab was removed to make the UI smaller.
-    Mistake words are now handled through the Words filter and the
-    Practice Mistakes button in the Words toolbar.
+    Mistake words are now handled through the Words filter.
   */
   if (!elements.mistakesGrid || !elements.emptyMistakes) {
     return;
@@ -850,32 +926,13 @@ function renderQuizScore() {
       <span>Accuracy</span>
     </div>
   `;
-
-  const missedWords = [...new Set(quizState.missedWordIds)]
-    .map((id) => words.find((word) => word.id === id))
-    .filter(Boolean);
-
-  if (missedWords.length === 0) {
-    elements.quizMistakes.innerHTML = `
-      <p class="muted-text">No missed words yet.</p>
-    `;
-    return;
-  }
-
-  elements.quizMistakes.innerHTML = missedWords
-    .map((word) => {
-      return `
-        <span class="mistake-chip">
-          ${escapeHtml(word.english)} / ${escapeHtml(word.german)}
-        </span>
-      `;
-    })
-    .join("");
 }
 
 function renderAll() {
   updateSummary();
   populateFilterValues();
+  populateCardFilterValues();
+  populateQuizFilterValues();
   renderWords();
   renderMistakes();
   renderQuizScore();
@@ -1050,6 +1107,7 @@ function deleteWord(id) {
   words = words.filter((item) => item.id !== word.id);
 
   delete individualHiddenState[word.id];
+  delete expandedCardState[word.id];
 
   saveWords();
   renderAll();
@@ -1079,6 +1137,11 @@ function handleWordAction(event) {
 
   if (action === "toggle-german") {
     toggleIndividualVisibility(id, "german");
+    return;
+  }
+
+  if (action === "toggle-card") {
+    toggleCardDetails(id);
     return;
   }
 
@@ -1144,6 +1207,27 @@ function saveMemo() {
   closeMemoModal();
 }
 
+function resetAllScores() {
+  if (words.length === 0) {
+    return;
+  }
+
+  const ok = confirm("Reset all correct and wrong counts to 0?");
+
+  if (!ok) {
+    return;
+  }
+
+  words.forEach((word) => {
+    word.correctCount = 0;
+    word.wrongCount = 0;
+  });
+
+  saveWords();
+  resetQuiz();
+  renderAll();
+}
+
 /* --------------------------------------------------
    Flashcards
 -------------------------------------------------- */
@@ -1173,26 +1257,28 @@ function pickRandomWord(pool) {
   return pool[randomIndex];
 }
 
-function startFlashcards(mistakesOnly = false) {
+function startFlashcards() {
   cardState.direction = elements.cardDirection.value;
-  cardState.mistakesOnly = mistakesOnly;
-  cardState.pool = mistakesOnly
-    ? words.filter((word) => word.wrongCount > 0)
-    : [...words];
-
-  cardState.currentWord = pickRandomWord(cardState.pool);
+  cardState.pool = getStudyPool("cards");
+  cardState.currentIndex = -1;
+  cardState.currentWord = null;
   cardState.answerShown = false;
 
-  renderFlashcard();
+  nextFlashcard();
   showTab("cards");
 }
 
 function nextFlashcard() {
-  cardState.pool = cardState.mistakesOnly
-    ? words.filter((word) => word.wrongCount > 0)
-    : [...words];
+  if (cardState.pool.length === 0) {
+    cardState.currentWord = null;
+    cardState.currentIndex = -1;
+    cardState.answerShown = false;
+    renderFlashcard();
+    return;
+  }
 
-  cardState.currentWord = pickRandomWord(cardState.pool);
+  cardState.currentIndex = (cardState.currentIndex + 1) % cardState.pool.length;
+  cardState.currentWord = cardState.pool[cardState.currentIndex];
   cardState.answerShown = false;
 
   renderFlashcard();
@@ -1204,10 +1290,7 @@ function renderFlashcard() {
   if (!word) {
     elements.flashcardBox.innerHTML = `
       <div class="empty-state inside-card">
-        ${cardState.mistakesOnly
-          ? "No mistaken words yet."
-          : "Add some words to start flashcard practice."
-        }
+        No words match this flashcard filter.
       </div>
     `;
 
@@ -1216,7 +1299,7 @@ function renderFlashcard() {
 
   elements.flashcardBox.innerHTML = `
     <div class="flashcard-face">
-      <p class="flashcard-label">Question</p>
+      <p class="flashcard-label">Question ${cardState.currentIndex + 1}/${cardState.pool.length}</p>
 
       <h2>
         ${escapeHtml(getQuestionText(word, cardState.direction))}
@@ -1296,6 +1379,8 @@ function handleFlashcardAction(event) {
 -------------------------------------------------- */
 
 function resetQuiz() {
+  quizState.pool = [];
+  quizState.currentIndex = -1;
   quizState.currentWord = null;
   quizState.options = [];
   quizState.answered = false;
@@ -1378,6 +1463,8 @@ function startQuiz() {
   resetQuiz();
 
   quizState.direction = elements.quizDirection.value;
+  quizState.pool = getStudyPool("quiz");
+  quizState.currentIndex = -1;
 
   nextQuizQuestion();
 }
@@ -1394,7 +1481,20 @@ function nextQuizQuestion() {
     return;
   }
 
-  const targetWord = pickRandomWord(words);
+  if (quizState.pool.length === 0) {
+    elements.quizBox.innerHTML = `
+      <p class="empty-state inside-card">
+        No words match this quiz filter.
+      </p>
+    `;
+
+    elements.quizOptions.innerHTML = "";
+    return;
+  }
+
+  quizState.currentIndex = (quizState.currentIndex + 1) % quizState.pool.length;
+
+  const targetWord = quizState.pool[quizState.currentIndex];
   const options = buildQuizOptions(targetWord, quizState.direction);
 
   if (options.length < 4) {
@@ -1413,7 +1513,7 @@ function nextQuizQuestion() {
   quizState.answered = false;
 
   elements.quizBox.innerHTML = `
-    <p class="flashcard-label">Question</p>
+    <p class="flashcard-label">Question ${quizState.currentIndex + 1}/${quizState.pool.length}</p>
 
     <h2>
       ${escapeHtml(getQuestionText(targetWord, quizState.direction))}
@@ -1512,6 +1612,8 @@ function bindEvents() {
 
   elements.sortSelect.addEventListener("change", renderWords);
 
+  elements.resetAllScoresBtn?.addEventListener("click", resetAllScores);
+
   elements.filterType.addEventListener("change", () => {
     populateFilterValues();
     renderWords();
@@ -1542,9 +1644,7 @@ function bindEvents() {
     autoDetectFormPOS(false);
   });
 
-  elements.startCardsBtn.addEventListener("click", () => {
-    startFlashcards(false);
-  });
+  elements.startCardsBtn.addEventListener("click", startFlashcards);
 
   elements.flashcardBox.addEventListener("click", handleFlashcardAction);
 
@@ -1554,12 +1654,37 @@ function bindEvents() {
     renderFlashcard();
   });
 
+  elements.cardSortSelect?.addEventListener("change", () => {
+    cardState.pool = [];
+    cardState.currentIndex = -1;
+  });
+
+  elements.cardFilterType?.addEventListener("change", () => {
+    populateCardFilterValues();
+    cardState.pool = [];
+    cardState.currentIndex = -1;
+  });
+
+  elements.cardFilterValue?.addEventListener("change", () => {
+    cardState.pool = [];
+    cardState.currentIndex = -1;
+  });
+
   elements.startQuizBtn.addEventListener("click", startQuiz);
   elements.resetQuizBtn.addEventListener("click", resetQuiz);
   elements.quizOptions.addEventListener("click", handleQuizOption);
 
-  elements.practiceMistakesBtn?.addEventListener("click", () => {
-    startFlashcards(true);
+  elements.quizSortSelect?.addEventListener("change", () => {
+    resetQuiz();
+  });
+
+  elements.quizFilterType?.addEventListener("change", () => {
+    populateQuizFilterValues();
+    resetQuiz();
+  });
+
+  elements.quizFilterValue?.addEventListener("change", () => {
+    resetQuiz();
   });
 
   elements.saveMemoBtn.addEventListener("click", saveMemo);

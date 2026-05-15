@@ -1,26 +1,11 @@
 # English-German Vocabulary Book
 
-A small English-German vocabulary web app that runs with only HTML, CSS, and JavaScript.
+A small HTML/CSS/JavaScript vocabulary app for English-German study.
 
-## Features
+## v3 changes
 
-- Save words in `localStorage`
-- Add, edit, delete words
-- Auto-suggest part of speech
-- Hide English / German globally or per card
-- Force-show English / German on an individual card even when global hide is active
-- Compact word cards with an Open / Close details toggle
-- Filter by CEFR level, part of speech, checklist flags, or mistakes
-- Sort by created order, A-Z, Z-A, random, or lowest accuracy
-- Flashcards with the same sort/filter controls as the word list
-- 4-choice quiz with the same sort/filter controls as the word list
-- Reset all correct/wrong counts at once
-- Responsive layout for small phones, iPhone SE-size screens, smartphones, tablets, and PCs
-
-## Files
-
-- `index.html`
-- `style.css`
-- `script.js`
-
-Open `index.html` in a browser or publish the folder with GitHub Pages.
+- Compact word cards with a right-side toggle switch for details.
+- Global hide modes reset per-card visibility overrides to prevent display bugs.
+- Individual Show EN / Show DE still works after global hide modes.
+- Flashcard sort/filter changes restart the card session from the first card.
+- Quiz behavior is unchanged from v2.

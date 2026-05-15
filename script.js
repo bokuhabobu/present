@@ -69,7 +69,8 @@ const cardState = {
   pool: [],
   currentWord: null,
   answerShown: false,
-  currentIndex: -1
+  currentIndex: -1,
+  hasStarted: false
 };
 
 const quizState = {
@@ -520,6 +521,15 @@ function getExpandedCardState(wordId) {
   return Boolean(expandedCardState[wordId]);
 }
 
+function resetIndividualVisibilityOverrides() {
+  Object.keys(individualHiddenState).forEach((wordId) => {
+    individualHiddenState[wordId] = {
+      english: null,
+      german: null
+    };
+  });
+}
+
 function isHiddenByGlobalMode(language) {
   const mode = elements.visibilitySelect?.value || "show-all";
 
@@ -637,7 +647,7 @@ function createWordCard(word) {
   return `
     <article class="word-card ${isExpanded ? "is-expanded" : "is-compact"}" data-id="${word.id}">
       <div class="word-card-basic">
-        <div class="word-card-top">
+        <div class="compact-card-row">
           <div class="word-title-block">
             <h3 class="${englishClass}">
               ${escapeHtml(visibleEnglish)}
@@ -650,18 +660,20 @@ function createWordCard(word) {
 
           <button
             type="button"
-            class="btn btn-mini-toggle details-toggle"
+            class="details-switch ${isExpanded ? "is-on" : ""}"
             data-action="toggle-card"
             aria-expanded="${isExpanded}"
+            aria-label="${isExpanded ? "Close word details" : "Open word details"}"
+            title="${isExpanded ? "Close details" : "Open details"}"
           >
-            ${isExpanded ? "Close" : "Open"}
+            <span class="details-switch-dot" aria-hidden="true"></span>
           </button>
         </div>
 
-        <div class="word-visibility-actions">
+        <div class="word-visibility-actions compact-visibility">
           <button
             type="button"
-            class="btn btn-mini-toggle ${englishButtonActive}"
+            class="btn btn-mini-toggle visibility-pill ${englishButtonActive}"
             data-action="toggle-english"
           >
             ${englishButtonText}
@@ -669,7 +681,7 @@ function createWordCard(word) {
 
           <button
             type="button"
-            class="btn btn-mini-toggle ${germanButtonActive}"
+            class="btn btn-mini-toggle visibility-pill ${germanButtonActive}"
             data-action="toggle-german"
           >
             ${germanButtonText}
@@ -1263,9 +1275,24 @@ function startFlashcards() {
   cardState.currentIndex = -1;
   cardState.currentWord = null;
   cardState.answerShown = false;
+  cardState.hasStarted = true;
 
   nextFlashcard();
   showTab("cards");
+}
+
+function restartFlashcardsFromControls() {
+  if (!cardState.hasStarted) {
+    return;
+  }
+
+  cardState.direction = elements.cardDirection.value;
+  cardState.pool = getStudyPool("cards");
+  cardState.currentIndex = -1;
+  cardState.currentWord = null;
+  cardState.answerShown = false;
+
+  nextFlashcard();
 }
 
 function nextFlashcard() {
@@ -1606,6 +1633,7 @@ function bindEvents() {
   elements.searchInput.addEventListener("input", renderWords);
 
   elements.visibilitySelect.addEventListener("change", () => {
+    resetIndividualVisibilityOverrides();
     renderWords();
     renderMistakes();
   });
@@ -1648,27 +1676,16 @@ function bindEvents() {
 
   elements.flashcardBox.addEventListener("click", handleFlashcardAction);
 
-  elements.cardDirection.addEventListener("change", () => {
-    cardState.direction = elements.cardDirection.value;
-    cardState.answerShown = false;
-    renderFlashcard();
-  });
+  elements.cardDirection.addEventListener("change", restartFlashcardsFromControls);
 
-  elements.cardSortSelect?.addEventListener("change", () => {
-    cardState.pool = [];
-    cardState.currentIndex = -1;
-  });
+  elements.cardSortSelect?.addEventListener("change", restartFlashcardsFromControls);
 
   elements.cardFilterType?.addEventListener("change", () => {
     populateCardFilterValues();
-    cardState.pool = [];
-    cardState.currentIndex = -1;
+    restartFlashcardsFromControls();
   });
 
-  elements.cardFilterValue?.addEventListener("change", () => {
-    cardState.pool = [];
-    cardState.currentIndex = -1;
-  });
+  elements.cardFilterValue?.addEventListener("change", restartFlashcardsFromControls);
 
   elements.startQuizBtn.addEventListener("click", startQuiz);
   elements.resetQuizBtn.addEventListener("click", resetQuiz);

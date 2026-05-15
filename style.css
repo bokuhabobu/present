@@ -78,6 +78,13 @@ button:disabled {
   gap: 8px;
 }
 
+.header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: clamp(1.45rem, 4vw, 2.35rem);
@@ -89,7 +96,8 @@ button:disabled {
   color: var(--muted);
 }
 
-.summary-pill {
+.summary-pill,
+.user-pill {
   display: inline-flex;
   width: fit-content;
   padding: 8px 12px;
@@ -99,6 +107,12 @@ button:disabled {
   box-shadow: 0 8px 22px rgba(31, 41, 55, 0.06);
   font-weight: 700;
   color: var(--primary);
+}
+
+.user-pill {
+  background: #f5efe3;
+  color: #7c5c2e;
+  font-size: 0.82rem;
 }
 
 .tab-nav {
@@ -317,6 +331,15 @@ button:disabled {
   color: var(--muted);
   font-size: 1.05rem;
   overflow-wrap: anywhere;
+}
+
+.word-card.is-compact h3 {
+  font-size: 1.12rem;
+}
+
+.word-card.is-compact .german-word {
+  margin-top: 2px;
+  font-size: 0.94rem;
 }
 
 .masked-word {

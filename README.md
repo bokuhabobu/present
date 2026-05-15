@@ -1,11 +1,53 @@
-# English-German Vocabulary Book
+# English-German Vocabulary Book - QR User Version
 
-A small HTML/CSS/JavaScript vocabulary app for English-German study.
+This version supports QR-code-based user separation with URL parameters.
 
-## v3 changes
+## Basic URL pattern
 
-- Compact word cards with a right-side toggle switch for details.
-- Global hide modes reset per-card visibility overrides to prevent display bugs.
-- Individual Show EN / Show DE still works after global hide modes.
-- Flashcard sort/filter changes restart the card session from the first card.
-- Quiz behavior is unchanged from v2.
+```text
+https://bokuhabobu.github.io/present/?uid=u_001
+https://bokuhabobu.github.io/present/?uid=u_002
+https://bokuhabobu.github.io/present/?uid=u_003
+```
+
+The app reads `uid` from the URL and saves data to a different localStorage key.
+
+```text
+?uid=u_001 -> vocabularyWords_u_001
+?uid=u_002 -> vocabularyWords_u_002
+```
+
+## Important note
+
+This is not a login system. Data is saved in the browser's localStorage, so it is separated by:
+
+- device
+- browser
+- domain
+- uid in the URL
+
+The same uid on a different device will not automatically sync.
+
+## Files
+
+```text
+index.html
+style.css
+script.js
+qr_generator_colab.ipynb
+qr_generator_colab.py
+```
+
+## GitHub Pages usage
+
+1. Upload `index.html`, `style.css`, and `script.js` to the GitHub Pages repository.
+2. Open the site with `?uid=...`.
+3. Use `qr_generator_colab.ipynb` in Google Colab to generate QR images.
+
+## Update GitHub
+
+```bash
+git add .
+git commit -m "Add QR user mode"
+git push
+```

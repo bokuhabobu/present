@@ -44,14 +44,8 @@ const USER_ID = getUserIdFromUrl();
 const STORAGE_KEY = `vocabularyWords_${USER_ID}`;
 const META_STORAGE_KEY = `vocabularyWordsMeta_${USER_ID}`;
 
-/*
-  Paste your Apps Script Web App URL here after deploying Code.gs.
-  Example:
-  const CLOUD_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxxxxxx/exec";
 
-  If this stays blank, the app works in local-only mode.
-*/
-const CLOUD_WEB_APP_URL = "";
+const CLOUD_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyiNAjUVp7ZZzWFYoZt2nwoANimzlDBOXgFuvsFzl6lk41QT1zUHOlt3VsU_8P9UC9Erw/exec";
 const CLOUD_SAVE_DELAY_MS = 600;
 
 const POS_OPTIONS = [

@@ -5,8 +5,8 @@
   --muted: #6b7280;
   --line: #e5e7eb;
 
-  --primary: #405cf5;
-  --primary-soft: #eef2ff;
+  --primary: #7c5c2e;
+  --primary-soft: #f5ead7;
 
   --correct: #16a34a;
   --correct-soft: #dcfce7;
@@ -33,7 +33,7 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, #fff7d6 0, transparent 26rem),
+    radial-gradient(circle at top left, #fff6dc 0, transparent 24rem),
     var(--bg);
   font-family:
     system-ui,
@@ -67,10 +67,15 @@ button:disabled {
 
 .app-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: flex-start;
   gap: 16px;
   margin-bottom: 16px;
+}
+
+.header-title {
+  display: grid;
+  gap: 8px;
 }
 
 .app-header h1 {
@@ -85,8 +90,9 @@ button:disabled {
 }
 
 .summary-pill {
-  flex: 0 0 auto;
-  padding: 10px 14px;
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.75);
@@ -103,7 +109,7 @@ button:disabled {
   z-index: 10;
 
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 
   padding: 8px;
@@ -187,7 +193,7 @@ button:disabled {
 .select:focus,
 .textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(64, 92, 245, 0.12);
+  box-shadow: 0 0 0 4px rgba(124, 92, 46, 0.16);
 }
 
 .is-hidden {
@@ -294,8 +300,8 @@ button:disabled {
 }
 
 .pos-badge {
-  color: #3730a3;
-  background: #e0e7ff;
+  color: #57534e;
+  background: #f1ede4;
 }
 
 .checklist-badge {
@@ -387,6 +393,10 @@ button:disabled {
 .wide-btn {
   width: 100%;
   margin-top: 8px;
+}
+
+.toolbar-action {
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -657,6 +667,138 @@ button:disabled {
   margin: 0 0 12px;
 }
 
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding: 12px 10px 88px;
+  }
+
+  .app-header {
+    margin-bottom: 12px;
+  }
+
+  .summary-pill {
+    font-size: 0.88rem;
+  }
+
+  .toolbar,
+  .mode-card,
+  .form-card,
+  .score-card,
+  .mistake-header {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .word-card {
+    gap: 11px;
+    padding: 12px;
+  }
+
+  .word-card-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .badge-stack,
+  .mini-meta {
+    justify-content: flex-start;
+  }
+
+  .word-card h3 {
+    font-size: 1.16rem;
+  }
+
+  .german-word {
+    font-size: 0.98rem;
+  }
+
+  .stats-row {
+    gap: 6px;
+  }
+
+  .stats-row span {
+    padding: 7px 5px;
+    font-size: 0.78rem;
+  }
+
+  .card-actions,
+  .study-actions,
+  .form-actions,
+  .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-actions .btn,
+  .study-actions .btn,
+  .form-actions .btn,
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .btn {
+    min-height: 40px;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+  }
+
+  .tab-nav {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    gap: 5px;
+    padding: 6px;
+    border-radius: 20px;
+  }
+
+  .nav-btn {
+    min-height: 42px;
+    padding: 7px 4px;
+    border-radius: 13px;
+    font-size: 0.78rem;
+  }
+
+  .flashcard,
+  .quiz-question-card {
+    min-height: 220px;
+    padding: 12px;
+  }
+
+  .flashcard-face,
+  .flashcard-answer,
+  .quiz-question-card {
+    min-height: 100px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-inline: 8px;
+  }
+
+  .summary-pill {
+    font-size: 0.8rem;
+  }
+
+  .nav-btn {
+    font-size: 0.72rem;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions,
+  .study-actions,
+  .form-actions,
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (orientation: landscape) and (max-width: 767px) {
   .words-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -669,8 +811,12 @@ button:disabled {
   }
 
   .toolbar {
-    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: center;
+  }
+
+  .toolbar .input[type="search"] {
+    grid-column: 1 / -1;
   }
 
   .words-grid {
@@ -736,6 +882,14 @@ button:disabled {
 
   .main-content {
     min-width: 0;
+  }
+
+  .toolbar {
+    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr auto;
+  }
+
+  .toolbar .input[type="search"] {
+    grid-column: auto;
   }
 }
 

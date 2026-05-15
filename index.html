@@ -12,18 +12,16 @@
 <body>
   <div class="app-shell">
     <header class="app-header">
-      <div>
+      <div class="header-title">
         <h1>Vocabulary(EN/DE)</h1>
+        <div id="wordSummary" class="summary-pill">0 words / 0 mistakes</div>
       </div>
-
-      <div id="wordSummary" class="summary-pill">0 words</div>
     </header>
 
     <nav class="tab-nav" aria-label="Main navigation">
       <button type="button" class="nav-btn active" data-tab="words">Words</button>
       <button type="button" class="nav-btn" data-tab="cards">Cards</button>
       <button type="button" class="nav-btn" data-tab="quiz">Quiz</button>
-      <button type="button" class="nav-btn" data-tab="mistakes">Mistakes</button>
       <button type="button" class="nav-btn" data-tab="add">Add</button>
     </nav>
 
@@ -68,6 +66,10 @@
             class="select is-hidden"
             aria-label="Filter value"
           ></select>
+
+          <button id="practiceMistakesBtn" type="button" class="btn btn-primary toolbar-action">
+            Practice Mistakes
+          </button>
         </div>
 
         <div id="wordsGrid" class="words-grid"></div>
@@ -140,27 +142,6 @@
           <h2>Missed Words</h2>
           <div id="quizMistakes" class="quiz-mistakes"></div>
         </div>
-      </section>
-
-      <section id="mistakesPanel" class="tab-panel">
-        <div class="mistake-header card">
-          <div>
-            <h2>Mistakes</h2>
-            <p>
-              Only words with one or more mistakes are shown here. They are sorted by the number of wrong answers.
-            </p>
-          </div>
-
-          <button id="practiceMistakesBtn" type="button" class="btn btn-primary">
-            Practice Mistakes
-          </button>
-        </div>
-
-        <div id="mistakesGrid" class="words-grid"></div>
-
-        <p id="emptyMistakes" class="empty-state" hidden>
-          No mistaken words yet.
-        </p>
       </section>
 
       <section id="addPanel" class="tab-panel">

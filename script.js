@@ -804,12 +804,24 @@ function renderMistakes() {
     .filter((word) => word.wrongCount > 0)
     .sort((a, b) => b.wrongCount - a.wrongCount);
 
+  if (elements.practiceMistakesBtn) {
+    elements.practiceMistakesBtn.disabled = mistakeWords.length === 0;
+  }
+
+  /*
+    The dedicated Mistakes tab was removed to make the UI smaller.
+    Mistake words are now handled through the Words filter and the
+    Practice Mistakes button in the Words toolbar.
+  */
+  if (!elements.mistakesGrid || !elements.emptyMistakes) {
+    return;
+  }
+
   elements.mistakesGrid.innerHTML = mistakeWords
     .map(createWordCard)
     .join("");
 
   elements.emptyMistakes.hidden = mistakeWords.length !== 0;
-  elements.practiceMistakesBtn.disabled = mistakeWords.length === 0;
 }
 
 function renderQuizScore() {
@@ -1508,7 +1520,7 @@ function bindEvents() {
   elements.filterValue.addEventListener("change", renderWords);
 
   elements.wordsGrid.addEventListener("click", handleWordAction);
-  elements.mistakesGrid.addEventListener("click", handleWordAction);
+  elements.mistakesGrid?.addEventListener("click", handleWordAction);
 
   elements.form.addEventListener("submit", handleFormSubmit);
 
@@ -1546,7 +1558,7 @@ function bindEvents() {
   elements.resetQuizBtn.addEventListener("click", resetQuiz);
   elements.quizOptions.addEventListener("click", handleQuizOption);
 
-  elements.practiceMistakesBtn.addEventListener("click", () => {
+  elements.practiceMistakesBtn?.addEventListener("click", () => {
     startFlashcards(true);
   });
 
@@ -1576,7 +1588,7 @@ function init() {
 
   const hashTab = window.location.hash.replace("#", "");
 
-  if (["words", "cards", "quiz", "mistakes", "add"].includes(hashTab)) {
+  if (["words", "cards", "quiz", "add"].includes(hashTab)) {
     showTab(hashTab);
   } else {
     showTab("words");

@@ -32,6 +32,7 @@ index.html
 style.css
 script.js
 README.md
+qr_generator_colab_random_no_noise.ipynb
 ```
 
 Then access:

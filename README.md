@@ -20,8 +20,6 @@ vocabularyWords_u_a3f91c7d20aa
 - `style.css` - Web app design
 - `script.js` - App logic with QR URL parameter support
 - `qr_generator_colab_random_no_noise.ipynb` - Google Colab QR generator
-- `qr_generator_colab_random_no_noise.py` - Python version of QR generator
-- `FULL_CODE_QR_RANDOM.md` - Full QR generator code
 
 ## How to publish the app
 

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>English-German Vocabulary Book</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div>
+        <h1>English-German Vocabulary Book</h1>
+        <p>A simple vocabulary app for learning English and German.</p>
+      </div>
+
+      <div id="wordSummary" class="summary-pill">0 words</div>
+    </header>
+
+    <nav class="tab-nav" aria-label="Main navigation">
+      <button type="button" class="nav-btn active" data-tab="words">Words</button>
+      <button type="button" class="nav-btn" data-tab="cards">Cards</button>
+      <button type="button" class="nav-btn" data-tab="quiz">Quiz</button>
+      <button type="button" class="nav-btn" data-tab="mistakes">Mistakes</button>
+      <button type="button" class="nav-btn" data-tab="add">Add</button>
+    </nav>
+
+    <main class="main-content">
+      <section id="wordsPanel" class="tab-panel active">
+        <div class="toolbar card">
+          <input
+            id="searchInput"
+            class="input"
+            type="search"
+            placeholder="Search English / German"
+          />
+
+          <select id="visibilitySelect" class="select" aria-label="Word visibility">
+            <option value="show-all">Show all</option>
+            <option value="hide-english">Hide all English</option>
+            <option value="hide-german">Hide all German</option>
+            <option value="hide-both">Hide both</option>
+          </select>
+
+          <select id="sortSelect" class="select" aria-label="Sort words">
+            <option value="created-asc">Created order</option>
+            <option value="az">A-Z</option>
+            <option value="za">Z-A</option>
+            <option value="random">Random</option>
+            <option value="wrong-desc">Most mistakes</option>
+            <option value="rate-asc">Lowest accuracy</option>
+          </select>
+
+          <select id="filterType" class="select" aria-label="Filter type">
+            <option value="all">All</option>
+            <option value="level">CEFR Level</option>
+            <option value="pos">Part of Speech</option>
+            <option value="weak">Weak</option>
+            <option value="review">Review</option>
+            <option value="favorite">Favorite</option>
+            <option value="mistakes">Mistakes</option>
+          </select>
+
+          <select
+            id="filterValue"
+            class="select is-hidden"
+            aria-label="Filter value"
+          ></select>
+        </div>
+
+        <div id="wordsGrid" class="words-grid"></div>
+
+        <p id="emptyWords" class="empty-state" hidden>
+          No words yet. Add your first word from the Add tab.
+        </p>
+      </section>
+
+      <section id="cardsPanel" class="tab-panel">
+        <div class="mode-card card">
+          <h2>Flashcards</h2>
+          <p class="muted-text">
+            Practice words in both directions: English to German or German to English.
+          </p>
+
+          <div class="form-actions">
+            <select id="cardDirection" class="select" aria-label="Flashcard direction">
+              <option value="en-de">English → German</option>
+              <option value="de-en">German → English</option>
+            </select>
+
+            <button id="startCardsBtn" type="button" class="btn btn-primary">
+              Start Cards
+            </button>
+          </div>
+        </div>
+
+        <div id="flashcardBox" class="flashcard card">
+          <p class="empty-state inside-card">
+            Add some words to start flashcard practice.
+          </p>
+        </div>
+      </section>
+
+      <section id="quizPanel" class="tab-panel">
+        <div class="mode-card card">
+          <h2>4-Choice Quiz</h2>
+          <p class="muted-text">
+            Create four-choice questions from your saved words. Similar part of speech and CEFR level are prioritized.
+          </p>
+
+          <div class="form-actions">
+            <select id="quizDirection" class="select" aria-label="Quiz direction">
+              <option value="en-de">English → German</option>
+              <option value="de-en">German → English</option>
+            </select>
+
+            <button id="startQuizBtn" type="button" class="btn btn-primary">
+              Start Quiz
+            </button>
+
+            <button id="resetQuizBtn" type="button" class="btn btn-soft">
+              Reset Score
+            </button>
+          </div>
+        </div>
+
+        <div id="quizScore" class="score-card card"></div>
+
+        <div id="quizBox" class="quiz-question-card card">
+          <p class="empty-state inside-card">
+            Press Start Quiz to begin.
+          </p>
+        </div>
+
+        <div id="quizOptions" class="quiz-options"></div>
+
+        <div class="mode-card card">
+          <h2>Missed Words</h2>
+          <div id="quizMistakes" class="quiz-mistakes"></div>
+        </div>
+      </section>
+
+      <section id="mistakesPanel" class="tab-panel">
+        <div class="mistake-header card">
+          <div>
+            <h2>Mistakes</h2>
+            <p>
+              Only words with one or more mistakes are shown here. They are sorted by the number of wrong answers.
+            </p>
+          </div>
+
+          <button id="practiceMistakesBtn" type="button" class="btn btn-primary">
+            Practice Mistakes
+          </button>
+        </div>
+
+        <div id="mistakesGrid" class="words-grid"></div>
+
+        <p id="emptyMistakes" class="empty-state" hidden>
+          No mistaken words yet.
+        </p>
+      </section>
+
+      <section id="addPanel" class="tab-panel">
+        <form id="wordForm" class="form-card card">
+          <h2 id="formTitle">Add new word</h2>
+
+          <p>
+            Enter English and German words. The app will suggest a part of speech automatically, but you can edit it manually.
+          </p>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="englishInput">English</label>
+              <input
+                id="englishInput"
+                class="input"
+                type="text"
+                placeholder="apple"
+                autocomplete="off"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="germanInput">German</label>
+              <input
+                id="germanInput"
+                class="input"
+                type="text"
+                placeholder="der Apfel"
+                autocomplete="off"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="posInput">Part of Speech</label>
+
+              <select id="posInput" class="select">
+                <option value="noun">noun</option>
+                <option value="verb">verb</option>
+                <option value="adjective">adjective</option>
+                <option value="adverb">adverb</option>
+                <option value="preposition">preposition</option>
+                <option value="conjunction">conjunction</option>
+                <option value="pronoun">pronoun</option>
+                <option value="phrase">phrase</option>
+                <option value="unknown" selected>unknown</option>
+              </select>
+
+              <div class="pos-tools">
+                <button id="autoDetectBtn" type="button" class="btn btn-soft">
+                  Auto Detect POS
+                </button>
+
+                <span id="posHint" class="hint-text">
+                  Auto suggestion: unknown
+                </span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="levelInput">CEFR Level</label>
+
+              <select id="levelInput" class="select">
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+                <option value="C1">C1</option>
+                <option value="C2">C2</option>
+                <option value="unknown" selected>unknown</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="correctCountInput">Correct Count</label>
+              <input
+                id="correctCountInput"
+                class="input"
+                type="number"
+                min="0"
+                value="0"
+              />
+            </div>
+
+            <div class="field">
+              <label for="wrongCountInput">Wrong Count</label>
+              <input
+                id="wrongCountInput"
+                class="input"
+                type="number"
+                min="0"
+                value="0"
+              />
+            </div>
+
+            <div class="field field-full">
+              <span class="field-title">Checklist</span>
+
+              <div class="checklist-form-grid">
+                <label class="check-item">
+                  <input id="check-learned" type="checkbox" />
+                  learned
+                </label>
+
+                <label class="check-item">
+                  <input id="check-weak" type="checkbox" />
+                  weak
+                </label>
+
+                <label class="check-item">
+                  <input id="check-review" type="checkbox" />
+                  review
+                </label>
+
+                <label class="check-item">
+                  <input id="check-favorite" type="checkbox" />
+                  favorite
+                </label>
+
+                <label class="check-item">
+                  <input id="check-test" type="checkbox" />
+                  test
+                </label>
+              </div>
+            </div>
+
+            <div class="field field-full">
+              <label for="memoInput">Memo</label>
+
+              <textarea
+                id="memoInput"
+                class="textarea"
+                placeholder="Masculine noun. Plural: die Äpfel."
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="saveWordBtn" type="submit" class="btn btn-primary">
+              Save word
+            </button>
+
+            <button id="resetFormBtn" type="button" class="btn btn-soft">
+              Reset form
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div id="memoModal" class="modal is-hidden" aria-hidden="true">
+    <div id="modalBackdrop" class="modal-backdrop"></div>
+
+    <div
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="memoModalTitle"
+    >
+      <h2 id="memoModalTitle">Memo</h2>
+
+      <textarea
+        id="memoTextarea"
+        class="textarea"
+        placeholder="Write your memo here."
+      ></textarea>
+
+      <div class="modal-actions">
+        <button id="saveMemoBtn" type="button" class="btn btn-primary">
+          Save memo
+        </button>
+
+        <button id="closeMemoBtn" type="button" class="btn btn-soft">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

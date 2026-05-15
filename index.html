@@ -17,6 +17,7 @@
         <div class="header-meta">
           <div id="wordSummary" class="summary-pill">0 words</div>
           <div id="currentUserBadge" class="user-pill">QR User: default</div>
+          <div id="cloudStatus" class="sync-pill">Cloud: not connected</div>
         </div>
       </div>
     </header>
@@ -77,7 +78,7 @@
         <div id="wordsGrid" class="words-grid"></div>
 
         <p id="emptyWords" class="empty-state" hidden>
-          No words yet. Add your first word from the Add tab.
+          No words yet.
         </p>
       </section>
 
@@ -126,7 +127,7 @@
 
         <div id="flashcardBox" class="flashcard card">
           <p class="empty-state inside-card">
-            Add some words to start flashcard practice.
+            Add some words.
           </p>
         </div>
       </section>
@@ -135,7 +136,7 @@
         <div class="mode-card card">
           <h2>4-Choice Quiz</h2>
           <p class="muted-text">
-            Create four-choice questions from your saved words. Similar part of speech and CEFR level are prioritized.
+            Create four-choice questions from your saved words.
           </p>
 
           <div class="study-control-grid">
@@ -195,7 +196,7 @@
           <h2 id="formTitle">Add new word</h2>
 
           <p>
-            Enter English and German words. The app will suggest a part of speech automatically, but you can edit it manually.
+            Enter English and German words. Part of speech is suggested automatically and can still be edited manually.
           </p>
 
           <div class="form-grid">
@@ -217,7 +218,7 @@
                 id="germanInput"
                 class="input"
                 type="text"
-                placeholder="der Apfel"
+                placeholder="Apfel"
                 autocomplete="off"
                 required
               />
@@ -237,16 +238,6 @@
                 <option value="phrase">phrase</option>
                 <option value="unknown" selected>unknown</option>
               </select>
-
-              <div class="pos-tools">
-                <button id="autoDetectBtn" type="button" class="btn btn-soft">
-                  Auto Detect POS
-                </button>
-
-                <span id="posHint" class="hint-text">
-                  Auto suggestion: unknown
-                </span>
-              </div>
             </div>
 
             <div class="field">

@@ -4,7 +4,8 @@
   English-German Vocabulary Book
 
   Features:
-  - Save words to localStorage
+  - Save words to Google Sheets cloud storage through Apps Script
+  - Keep localStorage as offline cache
   - Add / edit / delete words
   - Auto-detect part of speech with simple JavaScript rules
   - Search / sort / filter
@@ -15,8 +16,12 @@
   - Mistake review
   - Memo popup
 
-  localStorage key:
+  localStorage cache key:
   vocabularyWords_${USER_ID}
+
+  Cloud sync:
+  - Set CLOUD_WEB_APP_URL to your Google Apps Script Web App URL.
+  - Same ?uid=... loads the same cloud data on different devices.
 
   QR / URL parameter mode:
   - Open the app with ?uid=user001
@@ -30,13 +35,24 @@ function getUserIdFromUrl() {
   const safeUserId = rawUserId
     .trim()
     .replace(/[^a-zA-Z0-9_-]/g, "")
-    .slice(0, 40);
+    .slice(0, 80);
 
   return safeUserId || "default";
 }
 
 const USER_ID = getUserIdFromUrl();
 const STORAGE_KEY = `vocabularyWords_${USER_ID}`;
+const META_STORAGE_KEY = `vocabularyWordsMeta_${USER_ID}`;
+
+/*
+  Paste your Apps Script Web App URL here after deploying Code.gs.
+  Example:
+  const CLOUD_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxxxxxxx/exec";
+
+  If this stays blank, the app works in local-only mode.
+*/
+const CLOUD_WEB_APP_URL = "";
+const CLOUD_SAVE_DELAY_MS = 600;
 
 const POS_OPTIONS = [
   "noun",
@@ -73,6 +89,8 @@ let words = [];
 let currentEditId = null;
 let currentMemoId = null;
 let posManuallyChanged = false;
+let cloudSaveTimer = null;
+let latestLocalUpdatedAt = null;
 
 /*
   This stores temporary hide/show state for each card.
@@ -111,6 +129,7 @@ const elements = {
   panels: $$(".tab-panel"),
   wordSummary: $("#wordSummary"),
   currentUserBadge: $("#currentUserBadge"),
+  cloudStatus: $("#cloudStatus"),
 
   searchInput: $("#searchInput"),
   visibilitySelect: $("#visibilitySelect"),
@@ -132,7 +151,6 @@ const elements = {
   wrongCountInput: $("#wrongCountInput"),
   saveWordBtn: $("#saveWordBtn"),
   resetFormBtn: $("#resetFormBtn"),
-  autoDetectBtn: $("#autoDetectBtn"),
   posHint: $("#posHint"),
 
   cardDirection: $("#cardDirection"),
@@ -245,12 +263,45 @@ function normalizeWord(word) {
 }
 
 /* --------------------------------------------------
-   localStorage
+   Local cache + Google Sheets cloud sync
 -------------------------------------------------- */
+
+function getIsoNow() {
+  return new Date().toISOString();
+}
+
+function getLocalMeta() {
+  try {
+    const rawMeta = localStorage.getItem(META_STORAGE_KEY);
+
+    if (!rawMeta) {
+      return { updatedAt: null };
+    }
+
+    return JSON.parse(rawMeta);
+  } catch (error) {
+    console.error("Failed to load local metadata:", error);
+    return { updatedAt: null };
+  }
+}
+
+function saveLocalWords(updatedAt = getIsoNow()) {
+  latestLocalUpdatedAt = updatedAt;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+  localStorage.setItem(
+    META_STORAGE_KEY,
+    JSON.stringify({
+      uid: USER_ID,
+      updatedAt
+    })
+  );
+}
 
 function loadWords() {
   try {
     const rawData = localStorage.getItem(STORAGE_KEY);
+    const meta = getLocalMeta();
+    latestLocalUpdatedAt = meta.updatedAt;
 
     if (!rawData) {
       words = [];
@@ -265,8 +316,167 @@ function loadWords() {
   }
 }
 
+function isCloudConfigured() {
+  return /^https:\/\/script\.google\.com\/macros\/s\//.test(CLOUD_WEB_APP_URL);
+}
+
+function setSyncStatus(message, state = "") {
+  if (!elements.cloudStatus) {
+    return;
+  }
+
+  elements.cloudStatus.textContent = message;
+  elements.cloudStatus.className = "sync-pill";
+
+  if (state) {
+    elements.cloudStatus.classList.add(`is-${state}`);
+  }
+}
+
 function saveWords() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+  const updatedAt = getIsoNow();
+  saveLocalWords(updatedAt);
+  scheduleCloudSave(updatedAt);
+}
+
+function scheduleCloudSave(updatedAt = latestLocalUpdatedAt || getIsoNow()) {
+  if (!isCloudConfigured()) {
+    setSyncStatus("Cloud: off", "offline");
+    return;
+  }
+
+  window.clearTimeout(cloudSaveTimer);
+
+  cloudSaveTimer = window.setTimeout(() => {
+    saveWordsToCloud(updatedAt);
+  }, CLOUD_SAVE_DELAY_MS);
+}
+
+async function saveWordsToCloud(updatedAt = latestLocalUpdatedAt || getIsoNow()) {
+  if (!isCloudConfigured()) {
+    return;
+  }
+
+  try {
+    setSyncStatus("Cloud: syncing...", "working");
+
+    const formData = new FormData();
+    formData.append("action", "save");
+    formData.append("uid", USER_ID);
+    formData.append("updatedAt", updatedAt);
+    formData.append("words", JSON.stringify(words));
+
+    /*
+      Apps Script Web Apps do not reliably provide normal CORS headers.
+      mode: "no-cors" lets the browser send the save request safely.
+      The response cannot be read, so cloud loading uses JSONP instead.
+    */
+    await fetch(CLOUD_WEB_APP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: formData
+    });
+
+    setSyncStatus("Cloud: synced", "ok");
+  } catch (error) {
+    console.error("Cloud save failed:", error);
+    setSyncStatus("Cloud: save failed", "error");
+  }
+}
+
+function loadWordsFromCloud() {
+  return new Promise((resolve, reject) => {
+    if (!isCloudConfigured()) {
+      reject(new Error("Cloud Web App URL is not configured."));
+      return;
+    }
+
+    const callbackName = `__vocabCloudCallback_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const script = document.createElement("script");
+    const url = new URL(CLOUD_WEB_APP_URL);
+
+    url.searchParams.set("action", "load");
+    url.searchParams.set("uid", USER_ID);
+    url.searchParams.set("callback", callbackName);
+    url.searchParams.set("cache", String(Date.now()));
+
+    const cleanup = () => {
+      delete window[callbackName];
+      script.remove();
+    };
+
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Cloud load timed out."));
+    }, 12000);
+
+    window[callbackName] = (data) => {
+      window.clearTimeout(timer);
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      cleanup();
+      reject(new Error("Cloud load script failed."));
+    };
+
+    script.src = url.toString();
+    document.body.appendChild(script);
+  });
+}
+
+function getTimeValue(value) {
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? time : 0;
+}
+
+async function syncFromCloudOnStart() {
+  if (!isCloudConfigured()) {
+    setSyncStatus("Cloud: off", "offline");
+    return;
+  }
+
+  try {
+    setSyncStatus("Cloud: loading...", "working");
+
+    const cloudData = await loadWordsFromCloud();
+
+    if (!cloudData || cloudData.ok !== true) {
+      throw new Error(cloudData?.error || "Cloud load failed.");
+    }
+
+    const cloudWords = Array.isArray(cloudData.words)
+      ? cloudData.words.map(normalizeWord)
+      : [];
+
+    const cloudUpdatedAt = cloudData.updatedAt || null;
+    const localUpdatedAt = latestLocalUpdatedAt || getLocalMeta().updatedAt;
+
+    const cloudTime = getTimeValue(cloudUpdatedAt);
+    const localTime = getTimeValue(localUpdatedAt);
+
+    if (cloudWords.length === 0 && words.length > 0) {
+      setSyncStatus("Cloud: uploading local data...", "working");
+      saveWords();
+      return;
+    }
+
+    if (cloudTime >= localTime) {
+      words = cloudWords;
+      saveLocalWords(cloudUpdatedAt || getIsoNow());
+      renderAll();
+      setSyncStatus("Cloud: loaded", "ok");
+      return;
+    }
+
+    setSyncStatus("Cloud: local newer", "working");
+    saveWords();
+  } catch (error) {
+    console.error("Cloud load failed:", error);
+    setSyncStatus("Cloud: load failed", "error");
+  }
 }
 
 /* --------------------------------------------------
@@ -499,6 +709,10 @@ function detectPartOfSpeech(english, german) {
 }
 
 function updatePosHint() {
+  if (!elements.posHint) {
+    return;
+  }
+
   const detected = detectPartOfSpeech(
     elements.englishInput.value,
     elements.germanInput.value
@@ -1684,10 +1898,6 @@ function bindEvents() {
 
   elements.resetFormBtn.addEventListener("click", resetForm);
 
-  elements.autoDetectBtn.addEventListener("click", () => {
-    autoDetectFormPOS(true);
-  });
-
   elements.posInput.addEventListener("change", () => {
     posManuallyChanged = true;
   });
@@ -1755,6 +1965,7 @@ function init() {
   bindEvents();
   resetQuiz();
   renderAll();
+  syncFromCloudOnStart();
 
   const hashTab = window.location.hash.replace("#", "");
 

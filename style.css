@@ -97,7 +97,8 @@ button:disabled {
 }
 
 .summary-pill,
-.user-pill {
+.user-pill,
+.sync-pill {
   display: inline-flex;
   width: fit-content;
   padding: 8px 12px;
@@ -113,6 +114,28 @@ button:disabled {
   background: #f5efe3;
   color: #7c5c2e;
   font-size: 0.82rem;
+}
+
+.sync-pill {
+  background: #eef7ee;
+  color: #166534;
+  font-size: 0.82rem;
+}
+
+.sync-pill.is-working {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sync-pill.is-error,
+.sync-pill.is-offline {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.sync-pill.is-ok {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .tab-nav {

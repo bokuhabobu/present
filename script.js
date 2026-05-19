@@ -264,8 +264,8 @@ function findDuplicateWord(english, german, ignoreId = null) {
 
 function showDuplicateWarning(duplicateWord) {
   const message = duplicateWord
-    ? `同じやつだよ！！ Already exists: "${duplicateWord.english}" / "${duplicateWord.german}".`
-    : "同じやつだよ！！ This word pair already exists.";
+    ? `Already exists: "${duplicateWord.english}" / "${duplicateWord.german}".`
+    : "This word pair already exists.";
 
   if (elements.duplicateWarning) {
     elements.duplicateWarning.textContent = `⚠️ ${message}`;

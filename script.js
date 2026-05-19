@@ -263,23 +263,41 @@ function findDuplicateWord(english, german, ignoreId = null) {
 }
 
 function showDuplicateWarning(duplicateWord) {
-  const message = duplicateWord
-    ? `Already exists: "${duplicateWord.english}" / "${duplicateWord.german}".`
-    : "This word pair already exists.";
+  const title = "Duplicate entry";
+  const detail = duplicateWord
+    ? `This English–German pair is already saved: "${duplicateWord.english}" / "${duplicateWord.german}".`
+    : "This English–German pair is already saved.";
 
   if (elements.duplicateWarning) {
-    elements.duplicateWarning.textContent = `⚠️ ${message}`;
+    elements.duplicateWarning.replaceChildren();
+
+    const icon = document.createElement("span");
+    icon.className = "warning-icon";
+    icon.textContent = "⚡";
+
+    const copy = document.createElement("span");
+    copy.className = "warning-copy";
+
+    const titleText = document.createElement("span");
+    titleText.className = "warning-title";
+    titleText.textContent = title;
+
+    const detailText = document.createElement("span");
+    detailText.className = "warning-detail";
+    detailText.textContent = detail;
+
+    copy.append(titleText, detailText);
+    elements.duplicateWarning.append(icon, copy);
     elements.duplicateWarning.hidden = false;
   }
 
   elements.englishInput.classList.add("is-error");
   elements.germanInput.classList.add("is-error");
-  alert(message);
 }
 
 function clearDuplicateWarning() {
   if (elements.duplicateWarning) {
-    elements.duplicateWarning.textContent = "";
+    elements.duplicateWarning.replaceChildren();
     elements.duplicateWarning.hidden = true;
   }
 

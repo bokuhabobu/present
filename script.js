@@ -146,6 +146,7 @@ const elements = {
   saveWordBtn: $("#saveWordBtn"),
   resetFormBtn: $("#resetFormBtn"),
   posHint: $("#posHint"),
+  duplicateWarning: $("#duplicateWarning"),
 
   cardDirection: $("#cardDirection"),
   cardSortSelect: $("#cardSortSelect"),
@@ -236,6 +237,54 @@ function formatRate(word) {
   }
 
   return `${Math.round(getAccuracy(word) * 100)}%`;
+}
+
+function normalizeComparableText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function findDuplicateWord(english, german, ignoreId = null) {
+  const normalizedEnglish = normalizeComparableText(english);
+  const normalizedGerman = normalizeComparableText(german);
+
+  return words.find((word) => {
+    if (ignoreId !== null && Number(word.id) === Number(ignoreId)) {
+      return false;
+    }
+
+    return (
+      normalizeComparableText(word.english) === normalizedEnglish &&
+      normalizeComparableText(word.german) === normalizedGerman
+    );
+  });
+}
+
+function showDuplicateWarning(duplicateWord) {
+  const message = duplicateWord
+    ? `同じやつだよ！！ Already exists: "${duplicateWord.english}" / "${duplicateWord.german}".`
+    : "同じやつだよ！！ This word pair already exists.";
+
+  if (elements.duplicateWarning) {
+    elements.duplicateWarning.textContent = `⚠️ ${message}`;
+    elements.duplicateWarning.hidden = false;
+  }
+
+  elements.englishInput.classList.add("is-error");
+  elements.germanInput.classList.add("is-error");
+  alert(message);
+}
+
+function clearDuplicateWarning() {
+  if (elements.duplicateWarning) {
+    elements.duplicateWarning.textContent = "";
+    elements.duplicateWarning.hidden = true;
+  }
+
+  elements.englishInput.classList.remove("is-error");
+  elements.germanInput.classList.remove("is-error");
 }
 
 function normalizeWord(word) {
@@ -1231,6 +1280,7 @@ function setChecklistForm(checklist) {
 function resetForm() {
   currentEditId = null;
   posManuallyChanged = false;
+  clearDuplicateWarning();
 
   elements.form.reset();
 
@@ -1248,6 +1298,7 @@ function resetForm() {
 function fillFormForEdit(word) {
   currentEditId = word.id;
   posManuallyChanged = true;
+  clearDuplicateWarning();
 
   elements.englishInput.value = word.english;
   elements.germanInput.value = word.german;
@@ -1276,6 +1327,15 @@ function handleFormSubmit(event) {
     alert("Please enter both English and German.");
     return;
   }
+
+  const duplicateWord = findDuplicateWord(english, german, currentEditId);
+
+  if (duplicateWord) {
+    showDuplicateWarning(duplicateWord);
+    return;
+  }
+
+  clearDuplicateWarning();
 
   const existingWord = words.find((word) => word.id === currentEditId);
 
@@ -1897,10 +1957,12 @@ function bindEvents() {
   });
 
   elements.englishInput.addEventListener("input", () => {
+    clearDuplicateWarning();
     autoDetectFormPOS(false);
   });
 
   elements.germanInput.addEventListener("input", () => {
+    clearDuplicateWarning();
     autoDetectFormPOS(false);
   });
 

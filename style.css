@@ -233,6 +233,21 @@ button:disabled {
   box-shadow: 0 0 0 4px rgba(124, 92, 46, 0.16);
 }
 
+.input.is-error {
+  border-color: var(--wrong);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
+}
+
+.form-warning {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--wrong-soft);
+  border-radius: 14px;
+  background: var(--wrong-soft);
+  color: #991b1b;
+  font-weight: 800;
+}
+
 .is-hidden {
   display: none !important;
 }

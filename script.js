@@ -289,6 +289,8 @@ function showDuplicateWarning(duplicateWord) {
     copy.append(titleText, detailText);
     elements.duplicateWarning.append(icon, copy);
     elements.duplicateWarning.hidden = false;
+    elements.duplicateWarning.classList.remove("is-hidden");
+    elements.duplicateWarning.style.display = "flex";
   }
 
   elements.englishInput.classList.add("is-error");
@@ -299,6 +301,8 @@ function clearDuplicateWarning() {
   if (elements.duplicateWarning) {
     elements.duplicateWarning.replaceChildren();
     elements.duplicateWarning.hidden = true;
+    elements.duplicateWarning.classList.add("is-hidden");
+    elements.duplicateWarning.style.display = "none";
   }
 
   elements.englishInput.classList.remove("is-error");

@@ -238,6 +238,12 @@ button:disabled {
   box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.14);
 }
 
+
+.form-warning[hidden],
+.form-warning.is-hidden {
+  display: none !important;
+}
+
 .form-warning {
   display: flex;
   align-items: flex-start;
@@ -1151,7 +1157,4 @@ button:disabled {
   .words-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
-.form-warning[hidden] {
-  display: none !important;
 }
